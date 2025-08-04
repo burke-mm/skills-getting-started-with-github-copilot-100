@@ -5,46 +5,173 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mergington High School Activities</title>
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+        color: white;
+        font-size: 2.5em;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .activities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        padding: 20px 0;
+      }
+
+      .activity-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .activity-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      }
+
+      .activity-title {
+        color: #2c3e50;
+        font-size: 1.4em;
+        font-weight: 600;
+        margin-bottom: 15px;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 8px;
+      }
+
+      .activity-description {
+        color: #555;
+        margin-bottom: 15px;
+        line-height: 1.5;
+      }
+
+      .activity-schedule {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 4px solid #e74c3c;
+        font-weight: 500;
+      }
+
+      .participants-section {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 2px solid #ecf0f1;
+      }
+
+      .participants-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      .participants-list {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .participants-list li {
+        color: #555;
+        margin-bottom: 5px;
+        line-height: 1.4;
+      }
+
+      .participants-count {
+        color: #7f8c8d;
+        font-size: 0.9em;
+        font-style: italic;
+      }
+
+      .no-participants {
+        color: #95a5a6;
+        font-style: italic;
+      }
+
+      .loading {
+        text-align: center;
+        color: white;
+        font-size: 1.2em;
+        margin-top: 50px;
+      }
+    </style>
   </head>
   <body>
-    <header>
-      <h1>Mergington High School</h1>
-      <h2>Extracurricular Activities</h2>
-    </header>
+    <div class="container">
+      <h1>🎓 Mergington High School Activities</h1>
+      <div id="loading" class="loading">Loading activities...</div>
+      <div id="activities-container" class="activities-grid" style="display: none;"></div>
+    </div>
 
-    <main>
-      <section id="activities-container">
-        <h3>Available Activities</h3>
-        <div id="activities-list">
-          <!-- Activities will be loaded here -->
-          <p>Loading activities...</p>
-        </div>
-      </section>
+    <script>
+      async function loadActivities() {
+        try {
+          const response = await fetch('/activities');
+          const activities = await response.json();
 
-      <section id="signup-container">
-        <h3>Sign Up for an Activity</h3>
-        <form id="signup-form">
-          <div class="form-group">
-            <label for="email">Student Email:</label>
-            <input type="email" id="email" required placeholder="your-email@mergington.edu" />
-          </div>
-          <div class="form-group">
-            <label for="activity">Select Activity:</label>
-            <select id="activity" required>
-              <option value="">-- Select an activity --</option>
-              <!-- Activity options will be loaded here -->
-            </select>
-          </div>
-          <button type="submit">Sign Up</button>
-        </form>
-        <div id="message" class="hidden"></div>
-      </section>
-    </main>
+          const container = document.getElementById('activities-container');
+          const loading = document.getElementById('loading');
 
-    <footer>
-      <p>&copy; 2023 Mergington High School</p>
-    </footer>
+          container.innerHTML = '';
 
-    <script src="app.js"></script>
+          Object.entries(activities).forEach(([name, details]) => {
+            const card = document.createElement('div');
+            card.className = 'activity-card';
+
+            const participantsList = details.participants.length > 0
+              ? `<ul class="participants-list">
+                   ${details.participants.map(email => `<li>${email}</li>`).join('')}
+                 </ul>`
+              : `<p class="no-participants">No participants yet</p>`;
+
+            const participantsCount = `${details.participants.length}/${details.max_participants}`;
+
+            card.innerHTML = `
+              <h2 class="activity-title">${name}</h2>
+              <p class="activity-description">${details.description}</p>
+              <div class="activity-schedule">📅 ${details.schedule}</div>
+              <div class="participants-section">
+                <div class="participants-title">
+                  👥 Participants <span class="participants-count">(${participantsCount})</span>
+                </div>
+                ${participantsList}
+              </div>
+            `;
+
+            container.appendChild(card);
+          });
+
+          loading.style.display = 'none';
+          container.style.display = 'grid';
+
+        } catch (error) {
+          console.error('Error loading activities:', error);
+          document.getElementById('loading').textContent = 'Error loading activities';
+        }
+      }
+
+      // Load activities when page loads
+      document.addEventListener('DOMContentLoaded', loadActivities);
+    </script>
   </body>
 </html>
